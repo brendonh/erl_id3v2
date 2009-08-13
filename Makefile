@@ -1,5 +1,3 @@
-PKG_NAME = erl_id3v2
-
 SRC_DIR = src
 EBIN_DIR = ebin
 INCLUDE_DIR = include
@@ -14,8 +12,6 @@ ERLC = erlc
 ERLC_OPTS = -o $(EBIN_DIR) -Wall -v +debug_info
 
 ERL_CMD=erl \
-	-boot start_sasl \
-	-config $(PKG_NAME) \
 	+W w \
 	$(ERL_EBINS)
 
@@ -23,8 +19,8 @@ all: $(TARGETS)
 
 run_prereqs: all
 
-run: run_prereqs
-	$(ERL_CMD) -s erl_id3v2_test test
+test: run_prereqs
+	$(ERL_CMD) -noshell -s id3v2 test -s init stop
 
 clean: cleanlog
 	rm -f $(TARGETS)

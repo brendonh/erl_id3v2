@@ -11,7 +11,7 @@
          parse_synchsafe/1, strip_nulls/2]).
 
 -define(TESTPATTERN, "/media/everything/music/*/*/*.mp3").
--define(TESTFILE, "/media/everything/music/The Roots/Do You Want More/09 do you want more_!!!__!.mp3").
+-define(TESTFILE, "/media/everything/music/The Roots/Things Fall Apart/Bonus.mp3").
 
 -define(DBG(Term), io:format("~p: ~p~n", [self(), Term])).
 -define(GV(E, P), proplists:get_value(E, P)).
@@ -32,7 +32,8 @@ read_files([FN|Rest], Total, Fail) ->
     case read_file(FN) of
         {ok, Props} ->
             read_files(Rest, Total+1, Fail);
-        not_found -> read_files(Rest, Total+1, Fail+1)
+        not_found -> 
+            read_files(Rest, Total+1, Fail+1)
     end;
 read_files([], Total, Fail) ->
     ?DBG({total, Total}),
@@ -81,26 +82,20 @@ read_v2(File, Props) ->
     Version = ?GV(version, Props),
     read_v2(Version, File, Props).
 
-
 read_v2({2, 2, _}, File, Props) ->
     {ok, Header} = file:read(File, ?GV(size, Props)),
     Frames = read_next_frame_22(Header, []),
     {ok, Frames};
-    %{ok, [{frames, Frames}|Props]};
-
 read_v2({2, 3, _}, File, Props) ->
     {ok, Header} = file:read(File, ?GV(size, Props)),
     Header2 = skip_v2_extended_header(Header, Props),
     Frames = read_next_frame_23(Header2, []),
     {ok, Frames};
-    %{ok, [{frames, Frames}|Props]};
-
 read_v2({2, 4, _}, File, Props) ->
     {ok, Header} = file:read(File, ?GV(size, Props)),
     Header2 = skip_v2_extended_header(Header, Props),
     Frames = read_next_frame_24(Header2, []),
     {ok, Frames}.
-    %{ok, [{frames, Frames}|Props]}.
 
 
 % Untested! None of my mp3 files have extended headers.
@@ -173,6 +168,22 @@ parse_v2_frame(<<"TIT2">>, _Size, RawContent, _Flags, _Version) ->
     {tit2, extract_v2_string(RawContent)};
 parse_v2_frame(<<"TT2">>, _Size, RawContent, _Flags, _Version) ->
     {tit2, extract_v2_string(RawContent)};
+parse_v2_frame(<<"TALB">>, _Size, RawContent, _Flags, _Version) ->
+    {talb, extract_v2_string(RawContent)};
+parse_v2_frame(<<"TAL">>, _Size, RawContent, _Flags, _Version) ->
+    {talb, extract_v2_string(RawContent)};
+parse_v2_frame(<<"TPE1">>, _Size, RawContent, _Flags, _Version) ->
+    {tpe1, extract_v2_string(RawContent)};
+parse_v2_frame(<<"TE1">>, _Size, RawContent, _Flags, _Version) ->
+    {tpe1, extract_v2_string(RawContent)};
+parse_v2_frame(<<"TRCK">>, _Size, RawContent, _Flags, _Version) ->
+    {trck, extract_v2_string(RawContent)};
+parse_v2_frame(<<"TRK">>, _Size, RawContent, _Flags, _Version) ->
+    {trck, extract_v2_string(RawContent)};
+parse_v2_frame(<<"TCON">>, _Size, RawContent, _Flags, _Version) ->
+    {tcon, extract_v2_string(RawContent)};
+parse_v2_frame(<<"TCO">>, _Size, RawContent, _Flags, _Version) ->
+    {tcon, extract_v2_string(RawContent)};
 parse_v2_frame(_Other, _, _, _, _Version) -> 
     ignored.
 
@@ -180,7 +191,6 @@ parse_v2_frame(_Other, _, _, _, _Version) ->
 finalize_v2_frames(Frames) ->
     lists:reverse([F || F <- Frames, F /= ignored]).
                         
-
 
 
 
@@ -227,9 +237,6 @@ read_v1(File, _Props) ->
               {tcon, GenreStr}],
               %{speed, Speed}, {startTime, StartTime}, {endTime, EndTime}],
     {ok, Frames}.
-
-    %{ok, [{frames, Frames}|Props]}.
-
 
 
 parse_synchsafe(FourBytes) ->

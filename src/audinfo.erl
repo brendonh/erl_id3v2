@@ -58,7 +58,7 @@ get_info(Filename) ->
 get_info(nomatch, Filename) ->
     undefined;
 get_info({match, [Path, Ext]}, Filename) ->
-    {Title, Artist, Album, Track, Length} = get_metadata(Ext, Filename),
+    {Artist, Album, Title, Track, Length} = get_metadata(Ext, Filename),
     
     [File, Album2, Artist2 | Rest] = lists:reverse(string:tokens(Path, "/")),
     
@@ -70,7 +70,7 @@ get_info({match, [Path, Ext]}, Filename) ->
             {Track2, Title2} = {undefined, list_to_binary(File)}
     end,
 
-    {merge(Title, Title2), merge(Artist, Artist2), merge(Album, Album2), merge(Track, Track2), Length}.
+    {merge(Artist, Artist2), merge(Album, Album2), merge(Title, Title2), merge(Track, Track2), Length}.
              
 
 merge(undefined, undefined) -> undefined;

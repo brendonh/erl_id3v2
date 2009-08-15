@@ -261,7 +261,9 @@ strip_nulls(Bin, N) ->
 
 
 extract_v2_string(Binary) ->
-    strip_nulls(decode_v2_string(Binary), 0).
+    Bin = strip_nulls(decode_v2_string(Binary), 0),
+    Str = string:strip(binary_to_list(Bin)),
+    list_to_binary(Str).
 
 decode_v2_string(<<0:8, Rest/binary>>) -> 
     unicode:characters_to_binary(Rest, latin1);

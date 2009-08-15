@@ -74,9 +74,12 @@ get_info({match, [Path, Ext]}, Filename) ->
              
 
 merge(undefined, undefined) -> undefined;
-merge(undefined, Something) -> Something;
-merge(<<"">>,    Something) -> Something;
-merge(Something, _Whatever) -> Something.
+merge(undefined, Something) -> to_bin(Something);
+merge(<<"">>,    Something) -> to_bin(Something);
+merge(Something, _Whatever) -> to_bin(Something).
+
+to_bin(Something) when is_list(Something) -> list_to_binary(Something);
+to_bin(Other) -> Other.
 
 
 get_metadata("mp3", Filename) ->

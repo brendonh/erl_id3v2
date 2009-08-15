@@ -7,30 +7,17 @@
 %%%-------------------------------------------------------------------
 -module(id3v2).
 
--export([read_file/1, read/1, test/0,
-         parse_synchsafe/1, strip_nulls/2]).
-
--define(TESTPATTERN, "/media/everything/music/*/*/*.mp3").
--define(TESTFILE, "/media/everything/music/The Roots/Things Fall Apart/Bonus.mp3").
+-export([read_file/1, read/1, test/0]).
 
 -define(DBG(Term), io:format("~p: ~p~n", [self(), Term])).
 -define(GV(E, P), proplists:get_value(E, P)).
 
-test() ->
-    test_all().
 
-test_all() ->
-    Start = now(),
-    read_files(filelib:wildcard(?TESTPATTERN), 0, 0),
-    ?DBG({time, timer:now_diff(now(), Start) / 1000000}).
-
-test_one() ->
-    ?DBG(read_file(?TESTFILE)).
 
 
 read_files([FN|Rest], Total, Fail) ->
     case read_file(FN) of
-        {ok, Props} ->
+        {ok, _Props} ->
             read_files(Rest, Total+1, Fail);
         not_found -> 
             read_files(Rest, Total+1, Fail+1)
@@ -39,13 +26,15 @@ read_files([], Total, Fail) ->
     ?DBG({total, Total}),
     ?DBG({fail, Fail}).
 
-
-
 read_file(Filename) ->
-    {ok, File} = file:open(Filename, [read, raw, binary]),
-    RV = read(File),
-    file:close(File),
-    RV.
+    case file:open(Filename, [read, raw, binary]) of
+        {ok, File} ->
+            RV = read(File),
+            file:close(File),
+            RV;
+        _ ->
+            not_found
+    end.
 
 read(File) ->
     {ok, Start} = file:read(File, 10),
@@ -184,9 +173,25 @@ parse_v2_frame(<<"TCON">>, _Size, RawContent, _Flags, _Version) ->
     {tcon, extract_v2_string(RawContent)};
 parse_v2_frame(<<"TCO">>, _Size, RawContent, _Flags, _Version) ->
     {tcon, extract_v2_string(RawContent)};
+parse_v2_frame(<<"MCDI">>, _Size, RawContent, _Flags, _Version) ->
+    {mcdi, RawContent};
+parse_v2_frame(<<"MCI">>, _Size, RawContent, _Flags, _Version) ->
+    {mcdi, RawContent};
+parse_v2_frame(<<"TLEN">>, _Size, RawContent, _Flags, _Version) ->
+    {tlen, parse_length(RawContent)};
+parse_v2_frame(<<"TLE">>, _Size, RawContent, _Flags, _Version) ->
+    {tlen, parse_length(RawContent)};
 parse_v2_frame(_Other, _, _, _, _Version) -> 
     ignored.
 
+parse_length(RawContent) ->
+    Content = binary_to_list(extract_v2_string(RawContent)),
+    case catch (list_to_integer(Content)) of
+        Milliseconds when is_integer(Milliseconds) ->
+            Secs = Milliseconds div 1000,
+            {Secs div 60, Secs rem 60};
+        _ -> undefined
+    end.
 
 finalize_v2_frames(Frames) ->
     lists:reverse([F || F <- Frames, F /= ignored]).
@@ -421,3 +426,18 @@ v1genre(145) -> "Anime";
 v1genre(146) -> "JPop";
 v1genre(147) -> "Synthpop";
 v1genre(_) -> "Unknown".
+
+
+-define(TESTPATTERN, "/media/everything/music/*/*/*.mp3").
+-define(TESTFILE, "/media/everything/music/The Roots/Things Fall Apart/Bonus.mp3").
+
+test() ->
+    test_all().
+
+test_all() ->
+    Start = now(),
+    read_files(filelib:wildcard(?TESTPATTERN), 0, 0),
+    ?DBG({time, timer:now_diff(now(), Start) / 1000000}).
+
+%test_one() ->
+%    ?DBG(read_file(?TESTFILE)).

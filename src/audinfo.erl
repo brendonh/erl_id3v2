@@ -55,22 +55,27 @@ get_info(Filename) ->
     Match = re:run(Filename, "^(.*)[.]([a-zA-Z0-9]+)$", [{capture, all_but_first, list}]),
     get_info(Match, Filename).
 
-get_info(nomatch, Filename) ->
+get_info(nomatch, _Filename) ->
     undefined;
 get_info({match, [Path, Ext]}, Filename) ->
-    {Artist, Album, Title, Track, Length} = get_metadata(Ext, Filename),
+    case get_metadata(string:to_lower(Ext), Filename) of
+        not_audio -> undefined;
+        {Artist, Album, Title, Track, Length} ->
     
-    [File, Album2, Artist2 | Rest] = lists:reverse(string:tokens(Path, "/")),
+            [File, Album2, Artist2 | _Rest] = lists:reverse(string:tokens(Path, "/")),
     
-    case re:run(File, "^\s*([0-9]+)[\s._-]*(.*)", [{capture, all_but_first, list}]) of
-        {match, [Tr2, Ti2]} -> 
-            Track2 = list_to_integer(Tr2),
-            Title2 = list_to_binary(Ti2);
-        nomatch -> 
-            {Track2, Title2} = {undefined, list_to_binary(File)}
-    end,
+            case re:run(File, "^\s*([0-9]+)[\s._-]*(.*)", [{capture, all_but_first, list}]) of
+                {match, [Tr2, Ti2]} -> 
+                    Track2 = list_to_integer(Tr2),
+                    Title2 = list_to_binary(Ti2);
+                nomatch -> 
+                    {Track2, Title2} = {undefined, list_to_binary(File)}
+            end,
 
-    {merge(Artist, Artist2), merge(Album, Album2), merge(Title, Title2), merge(Track, Track2), Length}.
+            {merge(Artist, Artist2), merge(Album, Album2), merge(Title, Title2), merge(Track, Track2), Length}
+    end.
+
+
              
 
 merge(undefined, undefined) -> undefined;
@@ -89,8 +94,14 @@ get_metadata("mp3", Filename) ->
         not_found -> 
             {undefined, undefined, undefined, undefined, undefined}
     end;
+get_metadata("ogg", _Filename) ->
+    {undefined, undefined, undefined, undefined, undefined};
+get_metadata("m4a", _Filename) ->
+    {undefined, undefined, undefined, undefined, undefined};
+get_metadata("wma", _Filename) ->
+    {undefined, undefined, undefined, undefined, undefined};
 get_metadata(_, _) ->
-    {undefined, undefined, undefined, undefined, undefined}.
+    not_audio.
 
 
 get_track(Bin) when byte_size(Bin) >= 1 ->

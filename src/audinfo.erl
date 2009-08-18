@@ -106,6 +106,9 @@ get_metadata(_, _) ->
 
 get_track(Bin) when byte_size(Bin) >= 1 ->
     [T|_] = string:tokens(binary_to_list(Bin), "/"),
-    list_to_integer(string:strip(T));
+    case catch(list_to_integer(string:strip(T))) of
+        X when is_integer(X) -> X;
+        _ -> 0
+    end;
 get_track(_) -> undefined.
                     

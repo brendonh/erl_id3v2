@@ -13,19 +13,6 @@
 -define(GV(E, P), proplists:get_value(E, P)).
 
 
-
-
-read_files([FN|Rest], Total, Fail) ->
-    case read_file(FN) of
-        {ok, _Props} ->
-            read_files(Rest, Total+1, Fail);
-        not_found -> 
-            read_files(Rest, Total+1, Fail+1)
-    end;
-read_files([], Total, Fail) ->
-    ?DBG({total, Total}),
-    ?DBG({fail, Fail}).
-
 read_file(Filename) ->
     case file:open(Filename, [read, raw, binary]) of
         {ok, File} ->
@@ -430,16 +417,52 @@ v1genre(147) -> "Synthpop";
 v1genre(_) -> "Unknown".
 
 
--define(TESTPATTERN, "/media/everything/music/*/*/*.mp3").
--define(TESTFILE, "/media/everything/music/The Roots/Things Fall Apart/Bonus.mp3").
+%% ------------------------------------------------------------
+%% Tests
+%% ------------------------------------------------------------
+
+-define(TESTPATTERN, "/media/everything/music/The Roots/Things Fall Apart/*.mp3").
 
 test() ->
-    test_all().
-
-test_all() ->
     Start = now(),
     read_files(filelib:wildcard(?TESTPATTERN), 0, 0),
     ?DBG({time, timer:now_diff(now(), Start) / 1000000}).
 
-%test_one() ->
-%    ?DBG(read_file(?TESTFILE)).
+read_files([FN|Rest], Total, Fail) ->
+    case read_file(FN) of
+        {ok, Props} ->
+            ?DBG({?GV(trck, Props), ?GV(tit2, Props)}),
+            read_files(Rest, Total+1, Fail);
+        not_found -> 
+            read_files(Rest, Total+1, Fail+1)
+    end;
+read_files([], Total, Fail) ->
+    ?DBG({total, Total}),
+    ?DBG({fail, Fail}).
+
+
+
+
+%% $ make test
+%% erl +W w -pa ebin -noshell -s id3v2 test -s init stop
+%% <0.1.0>: {<<"11">>,<<"100% Dundee">>}
+%% <0.1.0>: {<<"14">>,<<"3rd Acts: Ques Vs. Scratch 2...Electric Boogaloo">>}
+%% <0.1.0>: {<<"10">>,<<"Act Too (Love Of My Life)">>}
+%% <0.1.0>: {<<"1">>,<<"Act Won (Things Fall Apart)">>}
+%% <0.1.0>: {<<"13">>,<<"Adrenaline!">>}
+%% <0.1.0>: {<<"8">>,<<"Ain't Sayin Nothin' New">>}
+%% <0.1.0>: {<<"18">>,<<"Bonus">>}
+%% <0.1.0>: {<<"12">>,<<"Diedre vs. Dice">>}
+%% <0.1.0>: {<<"16">>,<<"Don't See Us">>}
+%% <0.1.0>: {<<"9">>,<<"Double Trouble">>}
+%% <0.1.0>: {<<"6">>,<<"Dynamite!">>}
+%% <0.1.0>: {<<"4">>,<<"Step Into The Realm">>}
+%% <0.1.0>: {<<"2">>,<<"Table Of Contents (Pts. 1 & 2)">>}
+%% <0.1.0>: {<<"3">>,<<"The Next Movement">>}
+%% <0.1.0>: {<<"17">>,<<"The Return To Innocence Lost">>}
+%% <0.1.0>: {<<"5">>,<<"The Spark">>}
+%% <0.1.0>: {<<"7">>,<<"Without A Doubt">>}
+%% <0.1.0>: {<<"15">>,<<"You Got Me (wt Erykah Badu)">>}
+%% <0.1.0>: {total,18}
+%% <0.1.0>: {fail,0}
+%% <0.1.0>: {time,0.01496}

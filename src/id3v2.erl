@@ -214,7 +214,7 @@ read_v1(File, _Props) ->
     end,
 
     CB = fun(B1, B2) ->
-                 BinStr = erlang:concat_binary([strip_nulls(B1, 0), strip_nulls(B2, 0)]),
+                 BinStr = erlang:list_to_binary([strip_nulls(B1, 0), strip_nulls(B2, 0)]),
                  unicode:characters_to_binary(string:strip(binary_to_list(BinStr)), latin1)
          end,
 

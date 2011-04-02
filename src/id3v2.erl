@@ -160,6 +160,8 @@ parse_v2_frame(<<"TCON">>, _Size, RawContent, _Flags, _Version) ->
     {tcon, extract_v2_string(RawContent)};
 parse_v2_frame(<<"TCO">>, _Size, RawContent, _Flags, _Version) ->
     {tcon, extract_v2_string(RawContent)};
+parse_v2_frame(<<"TDRC">>, _Size, RawContent, _Flags, _Version) ->
+    {tdrc, extract_v2_string(RawContent)};
 parse_v2_frame(<<"MCDI">>, _Size, RawContent, _Flags, _Version) ->
     {mcdi, RawContent};
 parse_v2_frame(<<"MCI">>, _Size, RawContent, _Flags, _Version) ->

@@ -160,6 +160,8 @@ parse_v2_frame(<<"TCON">>, _Size, RawContent, _Flags, _Version) ->
     {tcon, extract_v2_string(RawContent)};
 parse_v2_frame(<<"TCO">>, _Size, RawContent, _Flags, _Version) ->
     {tcon, extract_v2_string(RawContent)};
+parse_v2_frame(<<"TDRC">>, _Size, RawContent, _Flags, _Version) ->
+    {tdrc, extract_v2_string(RawContent)};
 parse_v2_frame(<<"MCDI">>, _Size, RawContent, _Flags, _Version) ->
     {mcdi, RawContent};
 parse_v2_frame(<<"MCI">>, _Size, RawContent, _Flags, _Version) ->
@@ -214,7 +216,7 @@ read_v1(File, _Props) ->
     end,
 
     CB = fun(B1, B2) ->
-                 BinStr = list_to_binary([strip_nulls(B1, 0), strip_nulls(B2, 0)]),
+                 BinStr = erlang:list_to_binary([strip_nulls(B1, 0), strip_nulls(B2, 0)]),
                  unicode:characters_to_binary(string:strip(binary_to_list(BinStr)), latin1)
          end,
 
